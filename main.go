@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"grub-configurator/grub"
 
@@ -140,6 +141,21 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 		}
 	})
 
+	// Create remove button
+	removeButton := widget.NewButton("Remove", func() {
+		if selected == -1 {
+			return
+		}
+		dialog.ShowConfirm("Delete entry", "Are you sure you want to delete this entry?", func(ok bool) {
+			if ok {
+				menuEntries = append(menuEntries[:selected], menuEntries[selected+1:]...)
+				list.Refresh()
+				list.UnselectAll()
+				selected = -1
+			}
+		}, myWindow)
+	})
+
 	// Create a save button
 	saveButton := widget.NewButton("Save and Update Grub", func() {
 		dialog.ShowConfirm("Save and Update Grub", "Are you sure you want to save the changes to the boot order?", func(ok bool) {
@@ -185,7 +201,12 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 				widget.NewFormItem("New Name", newTitle),
 			}, func(ok bool) {
 				if ok {
-					menuEntries[selected].Title = newTitle.Text
+					oldTitle := menuEntries[selected].Title
+					newTitleText := newTitle.Text
+					menuEntries[selected].Title = newTitleText
+					// Use a regular expression to safely replace the title in the content
+					re := regexp.MustCompile(fmt.Sprintf(`(menuentry ')(%s)(')`, regexp.QuoteMeta(oldTitle)))
+					menuEntries[selected].Content = re.ReplaceAllString(menuEntries[selected].Content, fmt.Sprintf("${1}%s${3}", newTitleText))
 					list.Refresh()
 				}
 			}, myWindow)
@@ -193,6 +214,6 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 	})
 
 	// Add the rename button to the existing buttons layout
-	buttons := container.NewVBox(moveUpButton, moveDownButton, renameButton, saveButton)
+	buttons := container.NewVBox(moveUpButton, moveDownButton, renameButton, removeButton, saveButton)
 	return container.NewBorder(nil, buttons, nil, nil, list)
 }
