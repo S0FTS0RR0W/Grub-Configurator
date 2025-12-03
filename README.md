@@ -1,6 +1,6 @@
 # Grub Configurator
 
-A simple GUI application for configuring the GRUB bootloader.
+A simple GUI application for configuring the GRUB bootloader, aimed for Arch Linux systems.
 
 ## Features
 
