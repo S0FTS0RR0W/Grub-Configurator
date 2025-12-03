@@ -11,6 +11,7 @@ import (
 const GrubConfigPath = "/etc/default/grub"
 const GrubCfgPath = "/boot/grub/grub.cfg"
 const CustomProxyScriptPath = "/etc/grub.d/42_custom_proxy"
+const LinuxScriptPath = "/etc/grub.d/10_linux"
 
 // MenuEntry represents a grub menu entry.
 type MenuEntry struct {
@@ -143,6 +144,13 @@ func WriteCustomProxyScript(menuEntries []MenuEntry) error {
 		return fmt.Errorf("failed to make script executable: %s", out.String())
 	}
 
+	// Disable the 10_linux script to avoid duplicates
+	if err := DisableLinuxSubmenu(); err != nil {
+		// If this fails, we should try to clean up by removing the proxy script
+		// to avoid a potentially unbootable state.
+		_ = os.Remove(CustomProxyScriptPath)
+		return fmt.Errorf("failed to disable 10_linux script: %w", err)
+	}
 	return nil
 }
 
@@ -164,4 +172,28 @@ func DisableOsProber() error {
 
 	// Write the changes back to the file
 	return WriteGrubConfig(content)
+}
+
+// DisableLinuxSubmenu makes the 10_linux script non-executable.
+func DisableLinuxSubmenu() error {
+	cmd := exec.Command("/usr/bin/pkexec", "chmod", "-x", LinuxScriptPath)
+	var out strings.Builder
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to make 10_linux non-executable: %s", out.String())
+	}
+	return nil
+}
+
+// EnableLinuxSubmenu makes the 10_linux script executable.
+func EnableLinuxSubmenu() error {
+	cmd := exec.Command("/usr/bin/pkexec", "chmod", "+x", LinuxScriptPath)
+	var out strings.Builder
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to make 10_linux executable: %s", out.String())
+	}
+	return nil
 }

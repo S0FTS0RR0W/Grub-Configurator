@@ -149,6 +149,7 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 		dialog.ShowConfirm("Delete entry", "Are you sure you want to delete this entry?", func(ok bool) {
 			if ok {
 				menuEntries = append(menuEntries[:selected], menuEntries[selected+1:]...)
+				list.Length() // Recalculate list length
 				list.Refresh()
 				list.UnselectAll()
 				selected = -1
