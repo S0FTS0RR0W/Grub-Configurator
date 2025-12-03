@@ -92,7 +92,7 @@ func WriteGrubConfig(content string) error {
 	}
 
 	// Use pkexec to copy the temporary file to the grub config path
-	cmd := exec.Command("pkexec", "cp", tmpfile.Name(), GrubConfigPath)
+	cmd := exec.Command("/usr/bin/pkexec", "cp", tmpfile.Name(), GrubConfigPath)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -120,7 +120,7 @@ func WriteGrubCfg(content string) error {
 	}
 
 	// Use pkexec to copy the temporary file to the grub config path
-	cmd := exec.Command("pkexec", "cp", tmpfile.Name(), GrubCfgPath)
+	cmd := exec.Command("/usr/bin/pkexec", "cp", tmpfile.Name(), GrubCfgPath)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -133,7 +133,7 @@ func WriteGrubCfg(content string) error {
 
 // RunUpdateGrub runs the update-grub command with pkexec.
 func RunUpdateGrub() (string, error) {
-	cmd := exec.Command("pkexec", "update-grub")
+	cmd := exec.Command("/usr/bin/pkexec", "update-grub")
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -167,7 +167,7 @@ func WriteCustomProxyScript(menuEntries []MenuEntry) error {
 	}
 
 	// Use pkexec to copy the temporary file to the grub config path
-	cmd := exec.Command("pkexec", "cp", tmpfile.Name(), CustomProxyScriptPath)
+	cmd := exec.Command("/usr/bin/pkexec", "cp", tmpfile.Name(), CustomProxyScriptPath)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -176,7 +176,7 @@ func WriteCustomProxyScript(menuEntries []MenuEntry) error {
 	}
 
 	// Make the script executable
-	cmd = exec.Command("pkexec", "chmod", "+x", CustomProxyScriptPath)
+	cmd = exec.Command("/usr/bin/pkexec", "chmod", "+x", CustomProxyScriptPath)
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	if err := cmd.Run(); err != nil {

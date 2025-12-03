@@ -45,6 +45,10 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 				dialog.ShowError(fmt.Errorf("failed to create default grub config: %w", err), myWindow)
 				return widget.NewLabel("Failed to create default grub config")
 			}
+			if err := grub.DisableOsProber(); err != nil {
+				dialog.ShowError(fmt.Errorf("failed to disable os prober after creating default config: %w", err), myWindow)
+				return widget.NewLabel("Failed to disable os prober")
+			}
 			grubBytes = []byte(defaultContent)
 		} else {
 			dialog.ShowError(fmt.Errorf("failed to read grub config: %w", err), myWindow)
@@ -136,8 +140,6 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	// Create a rename button
-
 	// Create a save button
 	saveButton := widget.NewButton("Save and Update Grub", func() {
 		dialog.ShowConfirm("Save and Update Grub", "Are you sure you want to save the changes to the boot order?", func(ok bool) {
@@ -154,7 +156,7 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 				return
 			}
 
-			// Disable OS prober
+			// ask if user wants to disable OS prober
 			if err := grub.DisableOsProber(); err != nil {
 				progress.Hide()
 				dialog.ShowError(fmt.Errorf("failed to disable os prober: %w", err), myWindow)
@@ -172,6 +174,25 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 		}, myWindow)
 	})
 
-	buttons := container.NewVBox(moveUpButton, moveDownButton, saveButton)
-	return container.NewBorder(nil, nil, nil, buttons, list)
+	// Create a rename button
+	renameButton := widget.NewButton("Rename", func() {
+		if selected != -1 {
+			entry := menuEntries[selected]
+			newTitle := widget.NewEntry()
+			newTitle.SetText(entry.Title)
+
+			dialog.ShowForm("Rename", "Rename the selected boot entry", "Rename", []*widget.FormItem{
+				widget.NewFormItem("New Name", newTitle),
+			}, func(ok bool) {
+				if ok {
+					menuEntries[selected].Title = newTitle.Text
+					list.Refresh()
+				}
+			}, myWindow)
+		}
+	})
+
+	// Add the rename button to the existing buttons layout
+	buttons := container.NewVBox(moveUpButton, moveDownButton, renameButton, saveButton)
+	return container.NewBorder(nil, buttons, nil, nil, list)
 }
