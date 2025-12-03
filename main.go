@@ -44,7 +44,7 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 			if err := grub.WriteGrubConfig(defaultContent); err != nil {
 				dialog.ShowError(fmt.Errorf("failed to create default grub config: %w", err), myWindow)
 				return widget.NewLabel("Failed to create default grub config")
-			}
+			}https://github.com/S0FTS0RR0W/Grub-Configurator.git
 			if err := grub.DisableOsProber(); err != nil {
 				dialog.ShowError(fmt.Errorf("failed to disable os prober after creating default config: %w", err), myWindow)
 				return widget.NewLabel("Failed to disable os prober")
@@ -80,7 +80,7 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 	updateButton := widget.NewButton("Update Grub", func() {
 		progress := dialog.NewProgressInfinite("Running update-grub", "Please wait...", myWindow)
 		progress.Show()
-		output, err := grub.RunUpdateGrub()
+		output, err := grub.RunGrubMkconfig()
 		progress.Hide()
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("failed to update grub: %w\n%s", err, output), myWindow)
@@ -164,7 +164,7 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 			}
 
 			// Run update-grub
-			output, err := grub.RunUpdateGrub()
+			output, err := grub.RunGrubMkconfig()
 			progress.Hide()
 			if err != nil {
 				dialog.ShowError(fmt.Errorf("failed to update grub: %w\n%s", err, output), myWindow)

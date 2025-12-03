@@ -38,11 +38,13 @@ func ParseGrubCfg() ([]MenuEntry, error) {
 				menuEntries = append(menuEntries, *currentEntry)
 			}
 			parts := strings.SplitN(line, "'", 3)
-			if len(parts) > 1 {
-				currentEntry = &MenuEntry{
-					Title:   parts[1],
-					Content: line + "\n",
-				}
+			if len(parts) < 2 {
+				// Invalid menuentry line, skip it
+				continue
+			}
+			currentEntry = &MenuEntry{
+				Title:   parts[1],
+				Content: line + "\n",
 			}
 		} else if currentEntry != nil {
 			currentEntry.Content += line + "\n"
@@ -58,20 +60,6 @@ func ParseGrubCfg() ([]MenuEntry, error) {
 	}
 
 	return menuEntries, nil
-}
-
-// GenerateGrubCfg generates the new grub.cfg content from the list of menu entries.
-func GenerateGrubCfg(menuEntries []MenuEntry) (string, error) {
-	// This is a simplified and potentially dangerous way to generate the grub.cfg.
-	// A more robust solution would involve manipulating the scripts in /etc/grub.d/
-	// and then running update-grub. However, for the sake of this example, we will
-	// generate a new grub.cfg directly.
-
-	var builder strings.Builder
-	for _, entry := range menuEntries {
-		builder.WriteString(entry.Content)
-	}
-	return builder.String(), nil
 }
 
 // WriteGrubConfig writes the given content to the grub config file.
@@ -103,42 +91,14 @@ func WriteGrubConfig(content string) error {
 	return nil
 }
 
-// WriteGrubCfg writes the given content to the grub config file.
-func WriteGrubCfg(content string) error {
-	// Create a temporary file to write the content to
-	tmpfile, err := os.CreateTemp("", "grub-cfg-*.txt")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer os.Remove(tmpfile.Name())
-
-	if _, err := tmpfile.WriteString(content); err != nil {
-		return fmt.Errorf("failed to write to temporary file: %w", err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		return fmt.Errorf("failed to close temporary file: %w", err)
-	}
-
-	// Use pkexec to copy the temporary file to the grub config path
-	cmd := exec.Command("/usr/bin/pkexec", "cp", tmpfile.Name(), GrubCfgPath)
+// RunGrubMkconfig runs the grub-mkconfig command with pkexec.
+func RunGrubMkconfig() (string, error) {
+	cmd := exec.Command("/usr/bin/pkexec", "grub-mkconfig", "-o", GrubCfgPath)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run pkexec: %s", out.String())
-	}
-
-	return nil
-}
-
-// RunUpdateGrub runs the update-grub command with pkexec.
-func RunUpdateGrub() (string, error) {
-	cmd := exec.Command("/usr/bin/pkexec", "update-grub")
-	var out strings.Builder
-	cmd.Stdout = &out
-	cmd.Stderr = &out
-	if err := cmd.Run(); err != nil {
-		return out.String(), fmt.Errorf("failed to run update-grub: %w", err)
+		return out.String(), fmt.Errorf("failed to run grub-mkconfig: %w", err)
 	}
 	return out.String(), nil
 }
