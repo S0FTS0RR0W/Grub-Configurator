@@ -44,7 +44,7 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 			if err := grub.WriteGrubConfig(defaultContent); err != nil {
 				dialog.ShowError(fmt.Errorf("failed to create default grub config: %w", err), myWindow)
 				return widget.NewLabel("Failed to create default grub config")
-			}https://github.com/S0FTS0RR0W/Grub-Configurator.git
+			}
 			if err := grub.DisableOsProber(); err != nil {
 				dialog.ShowError(fmt.Errorf("failed to disable os prober after creating default config: %w", err), myWindow)
 				return widget.NewLabel("Failed to disable os prober")
