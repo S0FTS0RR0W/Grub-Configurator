@@ -17,11 +17,18 @@ A simple GUI application for configuring the GRUB bootloader, aimed for Arch Lin
 
 ## Building and Running
 
-To build and run the application, you need to have Go and Fyne installed.
+To build and install the application on Arch Linux (or derivatives), you can use `makepkg` via the provided `Makefile`.
 
 ```bash
-# Tidy the dependencies
-go mod tidy
+# Install the package
+makepkg -si
+```
+
+Alternatively, to build and run the application directly without packaging, you need to have Go and Fyne installed.
+
+```bash
+# Build the application
+go build -o grub-configurator .
 
 # Run the application
 go run .
