@@ -29,6 +29,7 @@ func main() {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Grub Config", grubConfigTab),
 		container.NewTabItem("Boot Order", bootOrderTab),
+		container.NewTabItem("Theme", createThemeTab(myWindow)),
 	)
 
 	myWindow.SetContent(tabs)
@@ -92,6 +93,11 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 
 	buttons := container.NewHBox(saveButton, updateButton)
 	return container.NewBorder(nil, buttons, nil, nil, container.NewScroll(grubInput))
+}
+
+// added theme tab for optional grub theming
+func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
+	return widget.NewLabel("Theme Tab")
 }
 
 func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
@@ -217,9 +223,4 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 	// Add the rename button to the existing buttons layout
 	buttons := container.NewVBox(moveUpButton, moveDownButton, renameButton, removeButton, saveButton)
 	return container.NewBorder(nil, buttons, nil, nil, list)
-}
-
-func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
-	return widget.NewLabel("Theme Tab")
-	// TODO
 }
