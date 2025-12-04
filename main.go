@@ -185,9 +185,16 @@ func createThemeTab(myWindow fyne.Window, themeInput *widget.Entry) fyne.CanvasO
 
 func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 	// Read the grub.cfg file
-	menuEntries, err := grub.ParseGrubCfg()
+	allMenuEntries, err := grub.ParseGrubCfg()
 	if err != nil {
 		return widget.NewLabel(fmt.Sprintf("Failed to parse grub.cfg: %v", err))
+	}
+
+	var menuEntries []grub.MenuEntry
+	for _, entry := range allMenuEntries {
+		if entry.Title != "UEFI Firmware Settings" {
+			menuEntries = append(menuEntries, entry)
+		}
 	}
 
 	// Create a draggable list to display the menu entries
@@ -255,15 +262,8 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 			progress := dialog.NewProgressInfinite("Saving and updating grub", "Please wait...", myWindow)
 			progress.Show()
 
-			var filteredMenuEntries []grub.MenuEntry
-			for _, entry := range menuEntries {
-				if entry.Title != "UEFI Firmware Settings" {
-					filteredMenuEntries = append(filteredMenuEntries, entry)
-				}
-			}
-
 			// Write the new boot order to the custom script
-			if err := grub.WriteCustomProxyScript(filteredMenuEntries); err != nil {
+			if err := grub.WriteCustomProxyScript(menuEntries); err != nil {
 				progress.Hide()
 				dialog.ShowError(fmt.Errorf("failed to write custom proxy script: %w", err), myWindow)
 				return
