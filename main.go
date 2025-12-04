@@ -255,8 +255,15 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 			progress := dialog.NewProgressInfinite("Saving and updating grub", "Please wait...", myWindow)
 			progress.Show()
 
+			var filteredMenuEntries []grub.MenuEntry
+			for _, entry := range menuEntries {
+				if entry.Title != "UEFI Firmware Settings" {
+					filteredMenuEntries = append(filteredMenuEntries, entry)
+				}
+			}
+
 			// Write the new boot order to the custom script
-			if err := grub.WriteCustomProxyScript(menuEntries); err != nil {
+			if err := grub.WriteCustomProxyScript(filteredMenuEntries); err != nil {
 				progress.Hide()
 				dialog.ShowError(fmt.Errorf("failed to write custom proxy script: %w", err), myWindow)
 				return
