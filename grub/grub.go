@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -196,4 +197,52 @@ func EnableLinuxSubmenu() error {
 		return fmt.Errorf("failed to make 10_linux executable: %s", out.String())
 	}
 	return nil
+}
+
+// GetThemeSetting returns the value of the GRUB_THEME setting in the grub config.
+func GetThemeSetting() (string, error) {
+	grubBytes, err := os.ReadFile(GrubConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read grub config: %w", err)
+	}
+
+	content := string(grubBytes)
+	if strings.Contains(content, "GRUB_THEME") {
+		for _, line := range strings.Split(content, "\n") {
+			if strings.HasPrefix(line, "GRUB_THEME") {
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					return strings.Trim(parts[1], `"`), nil
+				}
+			}
+		}
+	}
+
+	return "", nil
+}
+
+// SetThemeSetting sets the value of the GRUB_THEME setting in the grub config.
+func SetThemeSetting(theme string) error {
+	grubBytes, err := os.ReadFile(GrubConfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to read grub config: %w", err)
+	}
+
+	content := string(grubBytes)
+	themeLine := fmt.Sprintf(`GRUB_THEME="%s"`, theme)
+
+	if theme == "" {
+		// If the theme is empty, comment out the GRUB_THEME line
+		re := regexp.MustCompile(`(?m)^GRUB_THEME=.*$`)
+		content = re.ReplaceAllString(content, "#GRUB_THEME=")
+	} else {
+		if strings.Contains(content, "GRUB_THEME") {
+			re := regexp.MustCompile(`(?m)^#?GRUB_THEME=.*$`)
+			content = re.ReplaceAllString(content, themeLine)
+		} else {
+			content += "\n" + themeLine
+		}
+	}
+
+	return WriteGrubConfig(content)
 }

@@ -97,7 +97,30 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 
 // added theme tab for optional grub theming
 func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
-	return widget.NewLabel("Theme Tab")
+	themeSetting, err := grub.GetThemeSetting()
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("failed to get theme setting: %w", err), myWindow)
+		return widget.NewLabel("Failed to get theme setting")
+	}
+
+	themeInput := widget.NewEntry()
+	themeInput.SetText(themeSetting)
+
+	saveButton := widget.NewButton("Save", func() {
+		dialog.ShowConfirm("Save Theme", "Are you sure you want to save the changes to the theme?", func(ok bool) {
+			if !ok {
+				return
+			}
+			newTheme := themeInput.Text
+			if err := grub.SetThemeSetting(newTheme); err != nil {
+				dialog.ShowError(fmt.Errorf("failed to set theme: %w", err), myWindow)
+				return
+			}
+			dialog.ShowInformation("Success", "Theme saved successfully!", myWindow)
+		}, myWindow)
+	})
+
+	return container.NewBorder(nil, saveButton, nil, nil, themeInput)
 }
 
 func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
