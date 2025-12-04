@@ -218,3 +218,8 @@ func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
 	buttons := container.NewVBox(moveUpButton, moveDownButton, renameButton, removeButton, saveButton)
 	return container.NewBorder(nil, buttons, nil, nil, list)
 }
+
+func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
+	return widget.NewLabel("Theme Tab")
+	// TODO
+}
