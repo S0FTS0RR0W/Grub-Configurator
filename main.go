@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	myApp := app.New()
+	myApp := app.NewWithID("com.example.grubconfigurator")
 	myWindow := myApp.NewWindow("Grub Configurator")
 
 	myWindow.Resize(fyne.NewSize(800, 600))
@@ -26,11 +26,42 @@ func main() {
 	// Boot Order Tab
 	bootOrderTab := createBootOrderTab(myWindow)
 
+	themeInput := widget.NewEntry()
+	themeTab := createThemeTab(myWindow, themeInput)
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Grub Config", grubConfigTab),
 		container.NewTabItem("Boot Order", bootOrderTab),
-		container.NewTabItem("Theme", createThemeTab(myWindow)),
+		container.NewTabItem("Theme", themeTab),
 	)
+
+	myWindow.SetOnDropped(func(p fyne.Position, uris []fyne.URI) {
+		if len(uris) == 0 {
+			return
+		}
+		uri := uris[0]
+		path := uri.Path()
+
+		// Check if it's a directory
+		fileInfo, err := os.Stat(path)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
+
+		if !fileInfo.IsDir() {
+			dialog.ShowError(fmt.Errorf("please drop a folder, not a file"), myWindow)
+			return
+		}
+
+		// Check if theme.txt exists in the dropped folder
+		themeTxtPath := fmt.Sprintf("%s/theme.txt", path)
+		if _, err := os.Stat(themeTxtPath); os.IsNotExist(err) {
+			dialog.ShowError(fmt.Errorf("theme.txt not found in the dropped folder"), myWindow)
+			return
+		}
+		themeInput.SetText(path)
+	})
 
 	myWindow.SetContent(tabs)
 	myWindow.ShowAndRun()
@@ -96,14 +127,12 @@ func createGrubConfigTab(myWindow fyne.Window) fyne.CanvasObject {
 }
 
 // added theme tab for optional grub theming
-func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
+func createThemeTab(myWindow fyne.Window, themeInput *widget.Entry) fyne.CanvasObject {
 	themeSetting, err := grub.GetThemeSetting()
 	if err != nil {
 		dialog.ShowError(fmt.Errorf("failed to get theme setting: %w", err), myWindow)
 		return widget.NewLabel("Failed to get theme setting")
 	}
-
-	themeInput := widget.NewEntry()
 	themeInput.SetText(themeSetting)
 
 	saveButton := widget.NewButton("Save", func() {
@@ -120,7 +149,38 @@ func createThemeTab(myWindow fyne.Window) fyne.CanvasObject {
 		}, myWindow)
 	})
 
-	return container.NewBorder(nil, saveButton, nil, nil, themeInput)
+	selectButton := widget.NewButton("Select Theme Folder", func() {
+		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+			if err != nil {
+				dialog.ShowError(err, myWindow)
+				return
+			}
+			if uri == nil {
+				return
+			}
+
+			// Check if theme.txt exists in the selected folder
+			themeTxtPath := fmt.Sprintf("%s/theme.txt", uri.Path())
+			if _, err := os.Stat(themeTxtPath); os.IsNotExist(err) {
+				dialog.ShowError(fmt.Errorf("theme.txt not found in the selected folder"), myWindow)
+				return
+			}
+
+			themeInput.SetText(uri.Path())
+		}, myWindow)
+	})
+
+	dropZone := widget.NewLabel("Drag and drop a theme folder here")
+	dropZone.Alignment = fyne.TextAlignCenter
+
+	return container.NewBorder(
+		container.NewVBox(
+			themeInput,
+			container.NewHBox(saveButton, selectButton),
+		),
+		nil, nil, nil,
+		dropZone,
+	)
 }
 
 func createBootOrderTab(myWindow fyne.Window) fyne.CanvasObject {
